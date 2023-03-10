@@ -1,0 +1,17 @@
+version: '2'
+services:
+  cached-proxy:
+    image: cached_proxy:latest
+    volumes:
+      - ./bump:/etc/squid/cert
+  test:
+    image: test:latest
+    links:
+      - "cached-proxy"
+    environment:
+      http_proxy: http://cached-proxy:8080
+      https_proxy: http://cached-proxy:8080
+    volumes:
+      - ./bump/bump.crt:/etc/pki/ca-trust/source/anchors/cacert.pem
+
+
