@@ -1,7 +1,9 @@
 version: '2'
 services:
   cached-proxy:
-    image: cached_proxy:latest
+#    image: cached_proxy:latest
+    image: cached_proxy_erase:latest
+#    image:cached_proxy_enable:latest
     volumes:
       - ./bump:/etc/squid/cert
   test:
