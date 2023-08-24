@@ -117,10 +117,9 @@ RUN echo "deb-src http://deb.debian.org/debian bullseye main" > /etc/apt/sources
  && checkinstall -y -D --install=no --fstrans=no --requires="${requires}" \
         --pkgname="squid"
 
-
 FROM debian:bullseye-slim
 
-label maintainer="Jacob Alberty <jacob.alberty@foundigital.com>"
+LABEL maintainer="Jacob Alberty <jacob.alberty@foundigital.com>"
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -128,35 +127,40 @@ COPY --from=builder /build/squid_0-1_amd64.deb /tmp/squid.deb
 
 RUN apt update \
  && apt -qy install curl \
-#  後ほど修正
  && curl -o /tmp/libnettle6.deb http://security.ubuntu.com/ubuntu/pool/main/n/nettle/libnettle6_3.2-1_amd64.deb \
  && apt -qy install libssl1.1 /tmp/squid.deb /tmp/libnettle6.deb \
+ && apt-get install -y --no-install-recommends supervisor cron logrotate\
  && rm -rf /var/lib/apt/lists/*
+ #  && apt-get install -y --no-install-recommends supervisor logrotate\
+#  && rm -rf /var/lib/apt/lists/*
 
-COPY ./docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-COPY ./squid.conf /etc/squid.conf
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY squid.conf /etc/squid.conf
+
+# supervisordの設定ファイルをコピー
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 RUN mkdir /var/spool/squid
-
 RUN mkdir /var/log/squid
 
 # ファイルの所有者を変更
-RUN chown nobody:nogroup /var/spool/squid /var/log/squid
+# RUN chown nobody:nogroup /var/spool/squid /var/log/squid
+RUN chown proxy:proxy /var/spool/squid /var/log/squid
 
 # 権限追加
 RUN chmod 4755 /usr/lib/squid/pinger
 
 RUN touch /var/log/squid/access.log
-
 RUN chmod 666 /var/log/squid/access.log
 
 RUN touch /var/log/squid/cache.log
-
 RUN chmod 666 /var/log/squid/cache.log
 
 RUN touch /var/log/squid/store.log
-
 RUN chmod 666 /var/log/squid/store.log
+
+RUN touch /var/log/cron.log
+RUN chmod 666 /var/log/cron.log
 
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
@@ -166,7 +170,17 @@ RUN echo cache_dir ufs /var/spool/squid 100 16 256 > /tmp/squid.conf
 
 RUN squid -z -s -N -f /tmp/squid.conf
 
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+# cronの設定ファイルを追加
+COPY cronjob /etc/cron.d/cronjob
 
-CMD ["squid", "-NYC", "-f", "/etc/squid.conf"]
+# 所有者のみ書き込みと読み込みの権限追加
+RUN chmod 777 /etc/cron.d/cronjob
 
+# cronjobで毎日実行される定期的なジョブやスクリプトのスケジュールを定義
+RUN crontab /etc/cron.d/cronjob
+
+# ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+
+EXPOSE 3128
+
+CMD supervisord -c /etc/supervisor/supervisord.conf

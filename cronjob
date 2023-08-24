@@ -1,0 +1,1 @@
+13 * * * * /usr/sbin/squid -k rotate

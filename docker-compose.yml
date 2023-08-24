@@ -1,18 +1,21 @@
 version: '2'
 services:
   cached-proxy:
-#    image: cached_proxy:latest
-    image: cached_proxy_erase:latest
-#    image:cached_proxy_enable:latest
+    image: cached_proxy:latest
+#    image: cached_proxy_erase:latest
+    # image: cached_proxy_enable:latest
     volumes:
       - ./bump:/etc/squid/cert
+    ports:
+      - "3128:3128"
+
   test:
     image: test:latest
     links:
       - "cached-proxy"
     environment:
-      http_proxy: http://cached-proxy:8080
-      https_proxy: http://cached-proxy:8080
+      http_proxy: http://cached-proxy:3128
+      https_proxy: http://cached-proxy:3128
     volumes:
       - ./bump/bump.crt:/etc/pki/ca-trust/source/anchors/cacert.pem
 

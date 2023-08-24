@@ -1,0 +1,13 @@
+/var/log/squid/*.log {
+    daily
+    missingok
+    rotate 7
+    compress
+    delaycompress
+    notifempty
+    create 666 nobody nogroup
+    sharedscripts
+    postrotate
+        /usr/sbin/squid -k rotate
+    endscript
+}

@@ -2,4 +2,9 @@ FROM almalinux:latest
 
 COPY ./bump/bump.crt /etc/pki/ca-trust/source/anchors/cacert.pem
 
+COPY ./test.sh /test.sh
+
+RUN chmod 777 /test.sh
+
 RUN update-ca-trust
+
