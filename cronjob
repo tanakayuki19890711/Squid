@@ -1,1 +1,1 @@
-13 * * * * /usr/sbin/squid -k rotate
+* * * * * /usr/sbin/squid -k rotate
