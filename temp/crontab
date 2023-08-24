@@ -1,4 +1,0 @@
-47 * * * * root run-parts /etc/cron.hourly
-00 0 * * * root run-parts /etc/cron.daily
-00 0 * * 0 root run-parts /etc/cron.weekly
-00 0 1 * * root run-parts /etc/cron.monthly
